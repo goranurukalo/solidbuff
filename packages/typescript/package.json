@@ -1,0 +1,19 @@
+{
+	"name": "solidbuff",
+	"version": "0.1.0",
+	"description": "Serialization/Deserialization for JavaScript with built in compression",
+	"browser": {
+		".": "./dist/browser/index.js",
+		"./instance": "./dist/browser/instance.js"
+	},
+	"exports": {
+		".": "./dist/node/index.js",
+		"./instance": "./dist/node/instance.js"
+	},
+	"scripts": {
+		"test": "echo 'superbuff'"
+	},
+	"devDependencies": {
+		"typescript": "4.7.4"
+	}
+}
