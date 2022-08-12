@@ -1,13 +1,12 @@
-import sb from "./instance";
+// import sb from "./instance";
+import sb from "../../dist/instance.browser";
 
-/**
- * Currently i don't wanna add deps like vitest or jest
- * TODO: add proper testing support
- */
+// helpers
+const s = (v: any) => JSON.stringify(v);
+const i2s = (v: any) => JSON.stringify(Array.from(v));
+const r2s = (v: any) => `${v.source}-${v.flags}`;
 
-// const s = (v: any) => JSON.stringify(v);
-// const i2s = (v: any) => JSON.stringify(Array.from(v));
-// const r2s = (v: any) => `${v.source}-${v.flags}`;
+const vr = (v: any) => ([v, sb.deserialize(sb.serialize(v))]);
 
 // const v1 = "Example";
 // const v2 = 10;
@@ -63,3 +62,28 @@ import sb from "./instance";
 // console.log(i2s(r10.values()) === i2s(v10.values()));
 // console.log(r2s(r11) === r2s(v11));
 // console.log(r12 === v12);
+describe("browser version of solidbuff", () => {
+	// it("should handle 'strings'", () => {
+	// 	const [v, r] = vr("Example");
+	// 	expect(v).toBe(r);
+	// });
+
+	// it("should handle 'Array'", () => {
+	// 	const [v, r] = vr([1, null, undefined]);
+	// 	expect(s(v)).toBe(s(r));
+	// });
+	// it("should handle 'Array'", () => {
+	// 	const [v, r] = vr([{ foo: 1 }, { bar: 2 }]);
+	// 	expect(s(v)).toBe(s(r));
+	// });
+
+	// it("should handle 'Date'", () => {
+	// 	const [v, r] = vr(new Date(0));
+	// 	expect(s(v)).toBe(s(r));
+	// });
+
+	it("should handle 'Object'", () => {
+		const [v, r] = vr({ date: new Date(0) });
+		expect(s(v)).toBe(s(r));
+	});
+});

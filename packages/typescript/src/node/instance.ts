@@ -14,10 +14,10 @@ export class SolidBuff {
 		this.d = new SolidBuffDeserializer();
 	}
 
-	serialize(v: any): ArrayBuffer {
+	serialize(v: any): Buffer {
 		return this.s.serialize(v);
 	}
-	deserialize<T = any>(buffer: ArrayBuffer, offset = 0): T {
+	deserialize<T = any>(buffer: Buffer, offset = 0): T {
 		return this.d.deserialize(buffer, offset);
 	}
 }

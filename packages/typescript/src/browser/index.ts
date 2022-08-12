@@ -6,61 +6,14 @@
 // https://github.com/Rich-Harris/devalue#xss-mitigation
 // and many many others
 
+import { TypeMap } from "../typemap";
+import type { TOptions } from "../types";
+
 // TODO: another thing we can test so we don't need to do buffer allocation would be to have linked list of buffers and at end we make one (sum size while going, decoding strings could be harder maybe?)
 // TODO: string testing - check difference if we have uint8 that we skip [type, skip, size, string...] + subarrays
 // TODO: Support both platforms - "browser": "index-browser.js", "main": "index-node.js",
 // TODO: use enum for map + esbuild to build files and it will omit enum and just replace values where needed
 
-/**
- * Type map
- *
- *  10 "undefined",
- *  11 "null",
- *  12 "true",
- *  13 "false",
- *  14 "Infinity"
- *  15 "-Infinity"
- *  16 "NaN"
- *
- *  20 "uint8",
- *  21 "uint16",
- *  22 "uint32",
- *  23 "uint64", // BigInt
- *  24 "int8",
- *  25 "int16",
- *  26 "int32",
- *  27 "float32",
- *  28 "float64",
- *
- *  30 "array8"
- *  31 "array16"
- *  32 "array32"
- *
- *  40 "string8",
- *  41 "string16",
- *  42 "string32",
- *  "string64",
- *  "string128",
- *  "stringN",
- *
- *  50 "bin8",
- *  51 "bin16",
- *  52 "bin32",
- *
- *  60 "date",
- *  65 "regex",
- *  66 "Symbol????",
- *
- *  70 "ref"?
- *
- *  80 "setStart",
- *  81 "setEnd",
- *  82 "mapStart",
- *  83 "mapEnd",
- *  84 "objectStart",
- *  85 "objectEnd",
- *
- */
 
 /**
  * We have more space for expanding
@@ -69,13 +22,12 @@
  * In case we can't do that, we can use something like plugins where we can add our app specific implementations with basic interface
  */
 
-export type SOptions = { size?: number };
 export class SolidBuffSerializer {
 	protected offset: number;
 	protected buffer: ArrayBuffer;
 	protected view: DataView;
 
-	constructor({ size = 1048576 /* 1mb */ }: SOptions = {}) {
+	constructor({ size = 1048576 /* 1mb */ }: TOptions = {}) {
 		this.offset = 0; // TODO: in future we might start from existing buffer
 		this.buffer = new ArrayBuffer(size);
 		this.view = new DataView(this.buffer);
@@ -105,26 +57,26 @@ export class SolidBuffSerializer {
 	}
 
 	protected internalSerialization(value: any): void {
-		if (value === undefined) return this.view.setUint8(this.offset++, 10);
-		if (value === null) return this.view.setUint8(this.offset++, 11);
+		if (value === undefined) return this.view.setUint8(this.offset++, TypeMap.undefined);
+		if (value === null) return this.view.setUint8(this.offset++, TypeMap.null);
 
 		const type = typeof value;
 		switch (type) {
-			case "string":
+			case "string": {
 				// TODO, if sting, we can grow buffer right away in case its too small ?
 				// https://stackoverflow.com/questions/6965107/converting-between-strings-and-arraybuffers
 				// https://developer.chrome.com/blog/how-to-convert-arraybuffer-to-and-from-string/
 
 				const size = value.length;
 				if (size < 0x100) {
-					this.view.setUint8(this.offset++, 40);
+					this.view.setUint8(this.offset++, TypeMap.string8);
 					this.view.setUint8(this.offset++, size);
 				} else if (value < 0x10000) {
-					this.view.setUint8(this.offset++, 41);
+					this.view.setUint8(this.offset++, TypeMap.string16);
 					this.view.setUint16(this.offset, size);
 					this.offset += 2;
 				} else if (value < 0x100000000) {
-					this.view.setUint8(this.offset++, 42);
+					this.view.setUint8(this.offset++, TypeMap.string32);
 					this.view.setUint32(this.offset, size);
 					this.offset += 4;
 				}
@@ -134,36 +86,43 @@ export class SolidBuffSerializer {
 					this.offset += 2;
 				}
 				return;
-
+			}
 			case "number": {
 				if (value === Infinity) {
-					this.view.setUint8(this.offset++, 14);
+					this.view.setUint8(this.offset++, TypeMap.infinity);
 					return;
 				}
 				if (value === -Infinity) {
-					this.view.setUint8(this.offset++, 15);
+					this.view.setUint8(this.offset++, TypeMap.negativeInfinity);
 					return;
 				}
 				if (Number.isNaN(value)) {
-					this.view.setUint8(this.offset++, 16);
+					this.view.setUint8(this.offset++, TypeMap.NaN);
+					return;
+				}
+
+				if (!Number.isInteger(value)) {
+					this.view.setUint8(this.offset++, TypeMap.float64);
+					this.view.setFloat64(this.offset, value);
+					this.offset += 8;
 					return;
 				}
 
 				// negative values
 				if (value < 0) {
 					if (value >= -0x80) {
-						this.view.setUint8(this.offset++, 24);
+						this.view.setUint8(this.offset++, TypeMap.int8);
 						this.view.setInt8(this.offset++, value);
 					} else if (value >= -0x8000) {
-						this.view.setUint8(this.offset++, 25);
+						this.view.setUint8(this.offset++, TypeMap.int16);
 						this.view.setInt16(this.offset, value);
 						this.offset += 2;
 					} else if (value >= -0x80000000) {
-						this.view.setUint8(this.offset++, 26);
+						this.view.setUint8(this.offset++, TypeMap.int32);
 						this.view.setInt32(this.offset, value);
 						this.offset += 4;
 					} else {
-						this.view.setUint8(this.offset++, 28);
+						this.view.setUint8(this.offset++, TypeMap.float64);
 						this.view.setFloat64(this.offset, value);
 						this.offset += 8;
 					}
@@ -172,53 +131,54 @@ export class SolidBuffSerializer {
 
 				// positive values
 				if (value < 0x100) {
-					this.view.setUint8(this.offset++, 20);
+					this.view.setUint8(this.offset++, TypeMap.uint8);
 					this.view.setUint8(this.offset++, value);
 				} else if (value < 0x10000) {
-					this.view.setUint8(this.offset++, 21);
+					this.view.setUint8(this.offset++, TypeMap.uint16);
 					this.view.setUint16(this.offset, value);
 					this.offset += 2;
 				} else if (value < 0x100000000) {
-					this.view.setUint8(this.offset++, 22);
+					this.view.setUint8(this.offset++, TypeMap.uint32);
 					this.view.setUint32(this.offset, value);
 					this.offset += 4;
 				} else {
-					this.view.setUint8(this.offset++, 28);
+					this.view.setUint8(this.offset++, TypeMap.float64);
 					this.view.setFloat64(this.offset, value);
 					this.offset += 8;
 				}
 				return;
 			}
 			case "bigint": {
-				this.view.setUint8(this.offset++, 23);
+				this.view.setUint8(this.offset++, TypeMap.bigint);
 				this.view.setBigUint64(this.offset, value);
 				this.offset += 8;
 				return;
 			}
-			case "boolean":
-				return this.view.setUint8(this.offset++, value ? 12 : 13);
+			case "boolean": {
+				return this.view.setUint8(this.offset++, value ? TypeMap.true : TypeMap.false);
+			}
 			case "object": {
 				const { constructor } = Object.getPrototypeOf(value);
 				switch (constructor) {
 					case Object:
-						this.view.setUint8(this.offset++, 84);
+						this.view.setUint8(this.offset++, TypeMap.objectStart);
 						for (const key in value) {
 							this.internalSerialization(key);
 							this.internalSerialization(value[key]);
 						}
-						this.view.setUint8(this.offset++, 85);
+						this.view.setUint8(this.offset++, TypeMap.objectEnd);
 						return;
 					case Array: {
 						const size = value.length;
 						if (size < 0x100) {
-							this.view.setUint8(this.offset++, 30);
+							this.view.setUint8(this.offset++, TypeMap.array8);
 							this.view.setUint8(this.offset++, size);
 						} else if (size < 0x10000) {
-							this.view.setUint8(this.offset++, 31);
+							this.view.setUint8(this.offset++, TypeMap.array16);
 							this.view.setUint16(this.offset, size);
 							this.offset += 2;
 						} else if (size < 0x100000000) {
-							this.view.setUint8(this.offset++, 32);
+							this.view.setUint8(this.offset++, TypeMap.array32);
 							this.view.setUint32(this.offset, size);
 							this.offset += 4;
 						} else {
@@ -232,29 +192,29 @@ export class SolidBuffSerializer {
 						return;
 					}
 					case Date:
-						this.view.setUint8(this.offset++, 60);
+						this.view.setUint8(this.offset++, TypeMap.date);
 						this.view.setFloat64(this.offset, value.getTime());
 						this.offset += 8;
 						return;
 					case RegExp:
-						this.view.setUint8(this.offset++, 65);
+						this.view.setUint8(this.offset++, TypeMap.regex);
 						this.internalSerialization(value.source);
 						this.internalSerialization(value.flags);
 						return;
 					case Set:
-						this.view.setUint8(this.offset++, 80);
+						this.view.setUint8(this.offset++, TypeMap.setStart);
 						for (const v of value) {
 							this.internalSerialization(v);
 						}
-						this.view.setUint8(this.offset++, 81);
+						this.view.setUint8(this.offset++, TypeMap.setEnd);
 						return;
 					case Map:
-						this.view.setUint8(this.offset++, 82);
+						this.view.setUint8(this.offset++, TypeMap.mapStart);
 						for (const [k, v] of value) {
 							this.internalSerialization(k);
 							this.internalSerialization(v);
 						}
-						this.view.setUint8(this.offset++, 83);
+						this.view.setUint8(this.offset++, TypeMap.mapEnd);
 						return;
 
 					// TODO: support refs
@@ -268,7 +228,6 @@ export class SolidBuffSerializer {
 	}
 }
 
-// type DOptions = {};
 export class SolidBuffDeserializer {
 	protected offset!: number;
 	protected buffer!: ArrayBuffer;
@@ -286,82 +245,82 @@ export class SolidBuffDeserializer {
 	protected internalDeserialization(): any {
 		const type = this.view.getUint8(this.offset++);
 		switch (type) {
-			case 10:
+			case TypeMap.undefined:
 				return undefined;
-			case 11:
+			case TypeMap.null:
 				return null;
-			case 12:
+			case TypeMap.true:
 				return true;
-			case 13:
+			case TypeMap.false:
 				return false;
-			case 14:
+			case TypeMap.infinity:
 				return Infinity;
-			case 15:
+			case TypeMap.negativeInfinity:
 				return -Infinity;
-			case 16:
+			case TypeMap.NaN:
 				return NaN;
 
-			case 20:
+			case TypeMap.uint8:
 				return this.view.getUint8(this.offset++);
-			case 21: {
+			case TypeMap.uint16: {
 				const v = this.view.getUint16(this.offset);
 				this.offset += 2;
 				return v;
 			}
-			case 22: {
+			case TypeMap.uint32: {
 				const v = this.view.getUint32(this.offset);
 				this.offset += 4;
 				return v;
 			}
-			case 23: {
+			case TypeMap.bigint: {
 				const v = this.view.getBigUint64(this.offset);
 				this.offset += 8;
 				return v;
 			}
-			case 24:
+			case TypeMap.int8:
 				return this.view.getInt8(this.offset++);
-			case 25: {
+			case TypeMap.int16: {
 				const v = this.view.getInt16(this.offset);
 				this.offset += 2;
 				return v;
 			}
-			case 26: {
+			case TypeMap.int32: {
 				const v = this.view.getInt32(this.offset);
 				this.offset += 4;
 				return v;
 			}
 			// case 27: return null;
-			case 28: {
+			case TypeMap.float64: {
 				const v = this.view.getFloat64(this.offset);
 				this.offset += 8;
 				return v;
 			}
 
-			case 30: {
+			case TypeMap.array8: {
 				const size = this.view.getUint8(this.offset++);
 				return this.readArray(size);
 			}
-			case 31: {
-				const size = this.view.getUint8(this.offset);
+			case TypeMap.array16: {
+				const size = this.view.getUint16(this.offset);
 				this.offset += 2;
 				return this.readArray(size);
 			}
-			case 32: {
-				const size = this.view.getUint8(this.offset);
+			case TypeMap.array32: {
+				const size = this.view.getUint32(this.offset);
 				this.offset += 4;
 				return this.readArray(size);
 			}
 
-			case 40: {
+			case TypeMap.string8: {
 				const size = this.view.getUint8(this.offset++);
 				return this.readString(size * 2);
 			}
-			case 41: {
+			case TypeMap.string16: {
 				const size = this.view.getUint16(this.offset);
 				this.offset += 2;
 				return this.readString(size * 2);
 			}
-			case 42: {
+			case TypeMap.string32: {
 				const size = this.view.getUint32(this.offset);
 				this.offset += 4;
 				return this.readString(size * 2);
@@ -371,12 +330,12 @@ export class SolidBuffDeserializer {
 			// case 51: return null;
 			// case 52: return null;
 
-			case 60: {
+			case TypeMap.date: {
 				const v = new Date(this.view.getFloat64(this.offset));
 				this.offset += 8;
 				return v;
 			}
-			case 65: {
+			case TypeMap.regex: {
 				const source = this.internalDeserialization();
 				const flags = this.internalDeserialization();
 				return new RegExp(source, flags);
@@ -384,36 +343,39 @@ export class SolidBuffDeserializer {
 
 			// case 70: return null; // Ref? TODO:
 
-			case 80: {
+			case TypeMap.setStart: {
 				const set = new Set();
 				let current = this.view.getUint8(this.offset);
-				while (current !== 81) {
+				while (current !== TypeMap.setEnd) {
 					const value = this.internalDeserialization();
 					set.add(value);
 					current = this.view.getUint8(this.offset);
 				}
+				this.offset++;
 				return set;
 			}
-			case 82: {
+			case TypeMap.mapStart: {
 				const map = new Map();
 				let current = this.view.getUint8(this.offset);
-				while (current !== 83) {
+				while (current !== TypeMap.mapEnd) {
 					const key = this.internalDeserialization();
 					const value = this.internalDeserialization();
 					map.set(key, value);
 					current = this.view.getUint8(this.offset);
 				}
+				this.offset++;
 				return map;
 			}
-			case 84: {
+			case TypeMap.objectStart: {
 				const object: any = {};
 				let current = this.view.getUint8(this.offset);
 
-				while (current !== 85) {
+				while (current !== TypeMap.objectEnd) {
 					const key = this.internalDeserialization();
 					object[key] = this.internalDeserialization();
 					current = this.view.getUint8(this.offset);
 				}
+				this.offset++;
 				return object;
 			}
 		}
