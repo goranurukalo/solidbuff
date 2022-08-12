@@ -2,18 +2,23 @@
 	"name": "solidbuff",
 	"version": "0.1.0",
 	"description": "Serialization/Deserialization for JavaScript with built in compression",
-	"browser": {
-		".": "./dist/browser/index.js",
-		"./instance": "./dist/browser/instance.js"
-	},
-	"exports": {
-		".": "./dist/node/index.js",
-		"./instance": "./dist/node/instance.js"
-	},
+	"type": "module",
+	"files": [
+		"dist"
+	],
 	"scripts": {
-		"test": "echo 'superbuff'"
+		"test": "run-p -l test:*",
+		"test:code": "vitest run --config vitest.config.ts",
+		"build": "run-s -l build:*",
+		"build:clean": "rimraf dist",
+		"build:code": "tsup"
 	},
 	"devDependencies": {
-		"typescript": "4.7.4"
+		"@types/node": "18.7.1",
+		"npm-run-all": "^4.1.5",
+		"rimraf": "^3.0.2",
+		"tsup": "^6.2.1",
+		"typescript": "4.7.4",
+		"vitest": "^0.21.1"
 	}
 }
