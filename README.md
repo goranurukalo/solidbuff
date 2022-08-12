@@ -66,15 +66,15 @@ Its block based serialization. Each block is prefixed with single byte that defi
 1. Resizable buffer
 1. Add ability to add non-default data types
 1. Make it as fast as possible
-1. Make server version
-1. Make package to distribute easier
+1. ~~Make server version~~
+1. Make package to distribute easier (probably make separate packages)
 1. Add more examples
-1. Use esbuild for bundling
-1. Use enums instead of raw numbers for types
+1. ~~Use esbuild for bundling~~ (*used different tool*)
+1. ~~Use enums instead of raw numbers for types~~
 1. Add eslint, prettier and similar tools
 1. Add docs
 1. Place at the end for inspiration and all the credits
-
+1. Add Rust and Go version (both server and client are same)
 
 <br />
 <br />
