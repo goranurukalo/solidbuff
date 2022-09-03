@@ -1,22 +1,22 @@
 {
-	"$schema": "https://json.schemastore.org/tsconfig",
-	"compilerOptions": {
-		"strict": true,
-		"target": "ESNext",
-		"module": "ESNext",
-		"moduleResolution": "node",
-		"skipLibCheck": true,
-		"noImplicitAny": true,
-		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true,
-		"forceConsistentCasingInFileNames": true
-	},
-	"references": [
-		{
-			"path": "./tsconfig.browser.json"
-		},
-		{
-			"path": "./tsconfig.node.json"
-		}
-	]
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "compilerOptions": {
+        "strict": true,
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "node",
+        "skipLibCheck": true,
+        "noImplicitAny": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "forceConsistentCasingInFileNames": true
+    },
+    "references": [
+        {
+            "path": "./tsconfig.browser.json"
+        },
+        {
+            "path": "./tsconfig.node.json"
+        }
+    ]
 }

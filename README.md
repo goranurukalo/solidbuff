@@ -18,7 +18,9 @@ The easiest way to use SolidBuff is with its built in instance (`<TODO>/instance
 Easily serialize all of your data:
 
 ```ts
-import sb from 'solidbuff/instance';
+import sb from 'solidbuff/node'; // or
+// import sb from 'solidbuff/browser';
+
 const object = { date: new Date(0)};
 const payload = sb.serialize(object);
 // payload => Uint8Array([84,40,4,0,100,0,97,0,116,0,101,60,0,0,0,0,0,0,0,0,85]) // 21B
@@ -29,6 +31,19 @@ And deserialize it:
 const object = sb.deserialize<{ date: Date }>(payload);
 // object => { date: new Date(0) }
 ```
+
+<br />
+<br />
+
+> (TS) Make sure to have `"moduleResolution": "NodeNext"` setup in tsconfig for it to work correctly
+```json
+{
+	"compilerOptions": {
+		"moduleResolution": "NodeNext"
+	}
+}
+```
+<br />
 
 ## Why
 
@@ -68,7 +83,7 @@ Its block based serialization. Each block is prefixed with single byte that defi
 1. Make it as fast as possible
 1. ~~Make server version~~
 1. Make package to distribute easier (probably make separate packages)
-1. Add more examples
+1. Add more examples (currently in `index.spec.ts` files)
 1. ~~Use esbuild for bundling~~ (*used different tool*)
 1. ~~Use enums instead of raw numbers for types~~
 1. Add eslint, prettier and similar tools

@@ -2,10 +2,59 @@
 	"name": "solidbuff",
 	"version": "0.1.0",
 	"description": "Serialization/Deserialization for JavaScript with built in compression",
+	"main": "./dist/instance.node.js",
+	"module": "./dist/instance.node.js",
+	"browser": {
+		".": "./dist/instance.browser.js"
+	},
+	"unpkg": "./dist/instance.browser.js",
+	"types": "./dist/instance.node.d.ts",
 	"type": "module",
+	"sideEffects": false,
 	"files": [
 		"dist"
 	],
+	"exports": {
+		".": {
+			"browser": {
+				"import": {
+					"types": "./dist/instance.browser.d.ts",
+					"default": "./dist/instance.browser.js"
+				}
+			},
+			"node": {
+				"import": {
+					"types": "./dist/instance.node.d.ts",
+					"default": "./dist/instance.node.js"
+				}
+			}
+		},
+		"./dist/*": "./dist/*",
+		"./browser": {
+			"import": {
+				"types": "./dist/instance.browser.d.ts",
+				"default": "./dist/instance.browser.js"
+			}
+		},
+		"./browser/raw": {
+			"import": {
+				"types": "./dist/index.browser.d.ts",
+				"default": "./dist/index.browser.js"
+			}
+		},
+		"./node": {
+			"import": {
+				"types": "./dist/instance.node.d.ts",
+				"default": "./dist/instance.node.js"
+			}
+		},
+		"./node/raw": {
+			"import": {
+				"types": "./dist/index.node.d.ts",
+				"default": "./dist/index.node.js"
+			}
+		}
+	},
 	"scripts": {
 		"test": "run-p -l test:*",
 		"test:code": "vitest run --config vitest.config.ts",
@@ -14,11 +63,11 @@
 		"build:code": "tsup"
 	},
 	"devDependencies": {
-		"@types/node": "18.7.1",
-		"npm-run-all": "^4.1.5",
-		"rimraf": "^3.0.2",
-		"tsup": "^6.2.1",
-		"typescript": "4.7.4",
-		"vitest": "^0.21.1"
+		"@types/node": "18.7.14",
+		"npm-run-all": "4.1.5",
+		"rimraf": "3.0.2",
+		"tsup": "6.2.3",
+		"typescript": "4.8.2",
+		"vitest": "0.22.1"
 	}
 }
