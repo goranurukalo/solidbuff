@@ -1,0 +1,15 @@
+{
+	"name": "@examples/typescript-client",
+	"version": "0.1.0",
+	"type": "module",
+	"scripts": {
+		"start": "vite --port 3000"
+	},
+	"dependencies": {
+		"solidbuff": "0.1.0"
+	},
+	"devDependencies": {
+		"typescript": "4.8.2",
+		"vite": "3.0.9"
+	}
+}
